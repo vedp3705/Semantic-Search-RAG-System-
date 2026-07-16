@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Studio Transcripts</title>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Mono:wght@400;500&family=Nacelle:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #f5f2eb; --surface: #ffffff; --border: #ddd8ce;
+    --text: #1a1814; --muted: #6b6760; --accent: #2d5a3d; --accent-lt: #e8f0eb;
+    --mono: 'DM Mono', monospace; --serif: 'Instrument Serif', serif;
+    --sans: 'Nacelle', system-ui, sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg:#141210; --surface:#1e1c19; --border:#2e2c28; --text:#ede9e0;
+      --muted:#8a8680; --accent:#6aab7e; --accent-lt:#1a2e20; }
+  }
+  body { font-family:var(--sans); background:var(--bg); color:var(--text); min-height:100vh; font-size:15px; line-height:1.6; }
+  header { border-bottom:1px solid var(--border); padding:1.5rem 2.5rem; display:flex; align-items:flex-end; gap:1.5rem; }
+  .logo { font-family:var(--serif); font-size:2rem; color:var(--accent); font-style:italic; }
+  .header-text h1 { font-size:.9rem; font-weight:500; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); }
+  .header-text p { font-size:.75rem; color:var(--muted); }
+  main { max-width:900px; margin:0 auto; padding:2rem; }
+
+  /* Search */
+  .search-label { font-family:var(--mono); font-size:.7rem; letter-spacing:.12em; text-transform:uppercase; color:var(--muted); display:block; margin-bottom:.4rem; }
+  .search-row { display:flex; border:1.5px solid var(--border); border-radius:6px; overflow:hidden; background:var(--surface); transition:border-color .15s; }
+  .search-row:focus-within { border-color:var(--accent); }
+  #query { flex:1; border:none; outline:none; padding:.75rem 1rem; font-family:var(--sans); font-size:1rem; background:transparent; color:var(--text); }
+  #query::placeholder { color:var(--muted); }
+  #search-btn { border:none; border-left:1.5px solid var(--border); background:var(--accent); color:#fff; padding:0 1.25rem; font-family:var(--mono); font-size:.78rem; letter-spacing:.06em; cursor:pointer; white-space:nowrap; }
+  #search-btn:hover { opacity:.88; }
+
+  /* Filters + toggles */
+  .controls { display:flex; flex-wrap:wrap; gap:.5rem; margin-top:.75rem; align-items:center; }
+  .filter-pill { font-family:var(--mono); font-size:.68rem; padding:3px 10px; border:1px solid var(--border); border-radius:100px; background:transparent; color:var(--muted); cursor:pointer; transition:all .12s; white-space:nowrap; }
+  .filter-pill:hover { background:var(--surface); color:var(--text); }
+  .filter-pill.active { background:var(--accent-lt); border-color:var(--accent); color:var(--accent); }
+  .toggle-pill { font-family:var(--mono); font-size:.68rem; padding:3px 10px; border:1px solid var(--accent); border-radius:100px; background:transparent; color:var(--accent); cursor:pointer; }
+  .toggle-pill.active { background:var(--accent); color:#fff; }
+  .divider { width:1px; height:18px; background:var(--border); margin:0 4px; }
+
+  /* Examples */
+  .examples { margin-top:.75rem; display:flex; flex-wrap:wrap; gap:.35rem; }
+  .ex-btn { font-family:var(--mono); font-size:.65rem; padding:3px 9px; border:1px dashed var(--border); border-radius:4px; background:transparent; color:var(--muted); cursor:pointer; }
+  .ex-btn:hover { color:var(--text); border-color:var(--muted); }
+
+  /* Expansion notice */
+  #expansion-notice { font-family:var(--mono); font-size:.7rem; color:var(--accent); margin-bottom:.5rem; min-height:1.2em; }
+  #expansion-notice span { opacity:.6; margin-right:.3rem; }
+
+  /* Status */
+  #status { font-family:var(--mono); font-size:.72rem; color:var(--muted); margin-bottom:1rem; min-height:1.1em; }
+  .spinner { display:inline-block; width:12px; height:12px; border:2px solid var(--border); border-top-color:var(--accent); border-radius:50%; animation:spin .7s linear infinite; vertical-align:middle; margin-right:5px; }
+  @keyframes spin { to { transform:rotate(360deg); } }
+
+  /* Result cards */
+  .result-list { display:flex; flex-direction:column; gap:2px; }
+  .result-card { background:var(--surface); border:1px solid var(--border); border-radius:6px; padding:1rem 1.25rem; position:relative; transition:border-color .15s; }
+  .result-card::before { content:''; position:absolute; left:0; top:0; bottom:0; width:3px; background:var(--accent); opacity:0; border-radius:3px 0 0 3px; transition:opacity .15s; }
+  .result-card:hover { border-color:var(--accent); }
+  .result-card:hover::before { opacity:1; }
+  .card-meta { display:flex; align-items:center; gap:.5rem; margin-bottom:.45rem; flex-wrap:wrap; }
+  .ts { font-family:var(--mono); font-size:.7rem; color:var(--muted); }
+  .speaker-badge { font-family:var(--mono); font-size:.65rem; font-weight:500; padding:2px 7px; border-radius:3px; }
+  .role-focal_teacher     { background:#e8f0eb; color:#1a3d26; }
+  .role-student           { background:#e8eaf0; color:#1a1a3d; }
+  .role-non_focal_teacher { background:#f0ede8; color:#3d2a1a; }
+  .role-research_team     { background:#f0e8f0; color:#2a1a3d; }
+  .role-unknown_student   { background:#f0f0e8; color:#2a2a1a; }
+  @media (prefers-color-scheme: dark) {
+    .role-focal_teacher { background:#1a2e20; color:#6aab7e; }
+    .role-student { background:#1a1a2e; color:#8888e8; }
+    .role-non_focal_teacher { background:#2e2014; color:#c49a6a; }
+    .role-research_team { background:#2e142e; color:#c49aec; }
+    .role-unknown_student { background:#2e2e14; color:#aaaa6a; }
+  }
+  .score { margin-left:auto; font-family:var(--mono); font-size:.68rem; color:var(--muted); }
+  .card-text { font-size:.95rem; line-height:1.65; margin-bottom:.5rem; }
+  .translation { font-size:.85rem; color:var(--muted); font-style:italic; margin-bottom:.5rem; padding-left:.75rem; border-left:2px solid var(--border); }
+  .tags { display:flex; flex-wrap:wrap; gap:4px; margin-top:.4rem; }
+  .tag { font-family:var(--mono); font-size:.62rem; padding:2px 7px; border-radius:3px; border:1px solid currentColor; opacity:.75; }
+  .tag-point  { color:#1a3a5c; } .tag-rep { color:#3d1a5c; } .tag-write { color:#1a4a3a; }
+  .tag-ground { color:#5c3a1a; } .tag-mlr  { color:#1a3a5c; } .tag-stu  { color:#3a1a1a; }
+  .tag-combo  { color:#1a1a5c; }
+  @media (prefers-color-scheme: dark) {
+    .tag-point{color:#7ab4e8;}.tag-rep{color:#c49aec;}.tag-write{color:#6acfb4;}
+    .tag-ground{color:#e8b47a;}.tag-mlr{color:#7ab4e8;}.tag-stu{color:#e88888;}.tag-combo{color:#9090e8;}
+  }
+  .action-note { font-size:.78rem; color:var(--muted); margin-top:.4rem; font-family:var(--mono); line-height:1.5; }
+  .action-note::before { content:'↳ '; }
+  .preceding { font-size:.78rem; color:var(--muted); margin-top:.5rem; padding-top:.5rem; border-top:1px solid var(--border); }
+
+  /* Episode cards */
+  .episode-card { background:var(--surface); border:1px solid var(--border); border-radius:6px; overflow:hidden; }
+  .episode-header { padding:.75rem 1.25rem; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:.75rem; background:var(--accent-lt); }
+  .episode-ts { font-family:var(--mono); font-size:.8rem; font-weight:500; color:var(--accent); }
+  .episode-score { font-family:var(--mono); font-size:.7rem; color:var(--muted); margin-left:auto; }
+  .episode-turns { padding:.5rem 0; }
+  .episode-turn { padding:.5rem 1.25rem; display:flex; gap:.75rem; align-items:flex-start; border-bottom:1px solid var(--border); }
+  .episode-turn:last-child { border-bottom:none; }
+  .episode-turn-speaker { font-family:var(--mono); font-size:.65rem; padding:2px 6px; border-radius:3px; white-space:nowrap; flex-shrink:0; margin-top:2px; }
+  .episode-turn-text { font-size:.9rem; line-height:1.6; }
+
+  /* Empty state */
+  .empty { text-align:center; padding:4rem 2rem; color:var(--muted); }
+  .empty-serif { font-family:var(--serif); font-size:1.8rem; font-style:italic; display:block; margin-bottom:.5rem; color:var(--text); opacity:.25; }
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">T</div>
+  <div class="header-text">
+    <h1>Studio Transcripts</h1>
+    <p>Gesture · Speech · Pedagogy — semantic search</p>
+  </div>
+</header>
+
+<main>
+  <div style="margin-bottom:1.5rem">
+    <span class="search-label">Search the transcript</span>
+    <div class="search-row">
+      <input type="text" id="query" placeholder="e.g. teacher pointing while asking a question…" autocomplete="off" spellcheck="false"/>
+      <button id="search-btn" onclick="doSearch()">Search ↵</button>
+    </div>
+
+    <div class="controls" id="filters">
+      <span class="search-label" style="margin:0;align-self:center">Filter:</span>
+      <button class="filter-pill" data-key="filter_has_pointing" data-val="true">pointing</button>
+      <button class="filter-pill" data-key="filter_has_representational" data-val="true">representational</button>
+      <button class="filter-pill" data-key="filter_has_writing" data-val="true">writing</button>
+      <button class="filter-pill" data-key="filter_has_action" data-val="true">has gesture</button>
+      <button class="filter-pill" data-key="filter_speaker_role" data-val="focal_teacher">focal teacher</button>
+      <button class="filter-pill" data-key="filter_speaker_role" data-val="student">student</button>
+      <div class="divider"></div>
+      <button class="toggle-pill" id="episode-toggle" onclick="toggleEpisode()">episode view</button>
+    </div>
+
+    <div class="examples">
+      <span style="font-family:var(--mono);font-size:.65rem;color:var(--muted);align-self:center">Try:</span>
+      <button class="ex-btn" onclick="setQuery(this)">pointing gesture during teacher question</button>
+      <button class="ex-btn" onclick="setQuery(this)">student explaining reasoning in Spanish</button>
+      <button class="ex-btn" onclick="setQuery(this)">showing concept with hands</button>
+      <button class="ex-btn" onclick="setQuery(this)">eliciting student participation</button>
+      <button class="ex-btn" onclick="setQuery(this)">multiple gestures conveying one idea</button>
+      <button class="ex-btn" onclick="setQuery(this)">making math more accessible</button>
+    </div>
+  </div>
+
+  <div id="expansion-notice"></div>
+  <div id="status"></div>
+  <div id="results"></div>
+</main>
+
+<script>
+const API = 'http://localhost:8000';
+let activeFilters = {};
+let episodeMode = false;
+
+document.getElementById('query').addEventListener('keydown', e => {
+  if (e.key === 'Enter') doSearch();
+});
+
+document.querySelectorAll('.filter-pill').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const key = btn.dataset.key;
+    const raw = btn.dataset.val;
+    const val = raw === 'true' ? true : raw === 'false' ? false : raw;
+    if (JSON.stringify(activeFilters[key]) === JSON.stringify(val)) {
+      delete activeFilters[key];
+      btn.classList.remove('active');
+    } else {
+      document.querySelectorAll(`.filter-pill[data-key="${key}"]`).forEach(b => b.classList.remove('active'));
+      activeFilters[key] = val;
+      btn.classList.add('active');
+    }
+  });
+});
+
+function toggleEpisode() {
+  episodeMode = !episodeMode;
+  document.getElementById('episode-toggle').classList.toggle('active', episodeMode);
+}
+
+function setQuery(btn) {
+  document.getElementById('query').value = btn.textContent;
+  doSearch();
+}
+
+async function doSearch() {
+  const q = document.getElementById('query').value.trim();
+  if (!q) return;
+
+  const status = document.getElementById('status');
+  const results = document.getElementById('results');
+  const notice = document.getElementById('expansion-notice');
+
+  status.innerHTML = '<span class="spinner"></span>searching…';
+  results.innerHTML = '';
+  notice.innerHTML = '';
+
+  const body = { query: q, n_results: 8, group_by_episode: episodeMode, ...activeFilters };
+
+  try {
+    const res = await fetch(`${API}/search`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+
+    if (data.expanded_query && data.expanded_query !== q) {
+      notice.innerHTML = `<span>↳ expanded:</span>${esc(data.expanded_query)}`;
+    }
+
+    const items = episodeMode ? data.episodes : data.results;
+    if (!items || items.length === 0) {
+      status.textContent = '0 results';
+      results.innerHTML = `<div class="empty"><span class="empty-serif">Nothing found</span><p>Try different keywords or remove filters</p></div>`;
+      return;
+    }
+
+    status.textContent = `${items.length} ${episodeMode ? 'episodes' : 'results'} (deduplicated)`;
+    results.innerHTML = `<div class="result-list">${items.map(episodeMode ? renderEpisode : renderCard).join('')}</div>`;
+  } catch (err) {
+    status.textContent = 'connection error';
+    results.innerHTML = `<div class="empty"><span class="empty-serif">Connection error</span><p>Is the API running at ${API}?</p></div>`;
+  }
+}
+
+function gestureTagClass(g) {
+  if (g.includes('pointing')) return 'tag-point';
+  if (g.includes('representational')) return 'tag-rep';
+  if (g.includes('writing')) return 'tag-write';
+  return '';
+}
+function r1TagClass(r) {
+  const l = r.toLowerCase();
+  if (l.includes('ground')) return 'tag-ground';
+  if (l.includes('mlr')) return 'tag-mlr';
+  if (l.includes('student')) return 'tag-stu';
+  if (l.includes('combination')) return 'tag-combo';
+  return '';
+}
+
+function renderCard(c) {
+  const roles = { focal_teacher:'Focal Teacher', student:'Student', non_focal_teacher:'Teacher', research_team:'Researcher', unknown_student:'Student (UK)' };
+  const pct = Math.round(c.similarity_score * 100);
+  const gestureTags = (c.gesture_types||[]).map(g=>`<span class="tag ${gestureTagClass(g)}">${esc(g)}</span>`).join('');
+  const r1Tags = (c.round1_codes||[]).map(r=>`<span class="tag ${r1TagClass(r)}">${esc(r)}</span>`).join('');
+  const translation = c.text_es && c.text_en ? `<div class="translation">${esc(c.text_es)}</div>` : '';
+  const actionNote = c.action_notes ? `<div class="action-note">${esc(c.action_notes.split(' // ')[0])}</div>` : '';
+  const preceding = c.preceding_text ? `<div class="preceding">${esc(c.preceding_speaker)}: ${esc(c.preceding_text.slice(0,100))}…</div>` : '';
+  const tags = gestureTags + r1Tags;
+  return `<div class="result-card">
+    <div class="card-meta">
+      <span class="ts">@ ${c.timestamp}</span>
+      <span class="speaker-badge role-${c.speaker_role}">${c.speaker_code} · ${roles[c.speaker_role]||c.speaker_role}</span>
+      ${c.has_action ? '<span class="tag" style="opacity:1;border-color:var(--accent);color:var(--accent)">✦ gesture</span>' : ''}
+      <span class="score">${pct}%</span>
+    </div>
+    <div class="card-text">${esc(c.display_text||c.text)}</div>
+    ${translation}
+    ${tags ? `<div class="tags">${tags}</div>` : ''}
+    ${actionNote}
+    ${preceding}
+  </div>`;
+}
+
+function renderEpisode(ep) {
+  const pct = Math.round(ep.best_score * 100);
+  const roles = { focal_teacher:'Focal Teacher', student:'Student', non_focal_teacher:'Teacher', research_team:'Researcher', unknown_student:'Student (UK)' };
+  const turns = ep.turns.map(t => `
+    <div class="episode-turn">
+      <span class="episode-turn-speaker speaker-badge role-${t.speaker_role}">${t.speaker_code}</span>
+      <span class="episode-turn-text">${esc(t.text)}</span>
+    </div>`).join('');
+  return `<div class="episode-card">
+    <div class="episode-header">
+      <span class="episode-ts">@ ${ep.timestamp}</span>
+      <span style="font-family:var(--mono);font-size:.65rem;color:var(--muted)">${ep.transcript_id}</span>
+      <span class="episode-score">${pct}% match</span>
+    </div>
+    <div class="episode-turns">${turns}</div>
+  </div>`;
+}
+
+function esc(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+document.getElementById('results').innerHTML = `<div class="empty">
+  <span class="empty-serif">Ask anything</span>
+  <p>Search across speech, gestures, and pedagogical codes</p>
+</div>`;
+</script>
+</body>
+</html>
